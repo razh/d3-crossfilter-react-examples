@@ -37,7 +37,7 @@ gulp.task('browser-sync', function() {
 });
 
 gulp.task('js', function() {
-  var bundler = watchify(browserify('./examples/js/index.js',
+  var bundler = watchify(browserify('./examples/js/index.jsx',
     Object.assign({
       debug: true,
       extensions: ['.jsx']

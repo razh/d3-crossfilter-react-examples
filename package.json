@@ -36,6 +36,7 @@
     "gulp-util": "^3.0.1",
     "jeet": "^6.1.2",
     "nib": "^1.0.4",
+    "reactify": "^0.17.1",
     "vinyl-source-stream": "^1.0.0",
     "watchify": "^2.1.1"
   }

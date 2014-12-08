@@ -73,13 +73,13 @@ gulp.task('stylus', function() {
     }))
     .on('error', onError)
     .pipe(gulp.dest('dist'))
-    .pipe(browserSync.reload({stream: true, once: true}));
+    .pipe(browserSync.reload({stream: true}));
 });
 
 gulp.task('assets', function() {
   return gulp.src('./examples/assets/**/*')
     .pipe(gulp.dest('dist'))
-    .pipe(browserSync.reload({stream: true}));
+    .pipe(browserSync.reload({stream: true, once: true}));
 });
 
 gulp.task('traceur-runtime', function() {

@@ -45,7 +45,7 @@ gulp.task('js', function() {
 
   bundler
     .transform(reactify)
-    .transform(es6ify.configure(/.jsx/));
+    .transform(es6ify.configure(/.(js|jsx)$/));
 
   function rebundle() {
     return bundler.bundle()

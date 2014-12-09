@@ -23,7 +23,7 @@ export default React.createClass({
 
     return (
       <svg width={width} height={height}>
-        <g transform={'translate(' + margin.left + ', ' + margin.top + ')'}>
+        <g transform={'translate(' + margin.left + ',' + margin.top + ')'}>
           <Line
             data={data}
             x={x}

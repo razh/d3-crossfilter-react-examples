@@ -8,7 +8,8 @@ import { randomGaussian } from './../data/random';
 var defaults = {
   margin: { top: 32, left: 32, bottom: 32, right: 32 },
   width: 320,
-  height: 320
+  height: 320,
+  xAccessor: ( d, i ) => i
 };
 
 var store = (() => {
@@ -47,13 +48,17 @@ var store = (() => {
   };
 }) ();
 
-var LineChart = React.createClass({
+var ChartMixin = {
   propTypes: {
     id: React.PropTypes.string.isRequired,
     dimension: React.PropTypes.object.isRequired,
     group: React.PropTypes.object.isRequired,
     yAccessor: React.PropTypes.func.isRequired
-  },
+  }
+};
+
+var LineChart = React.createClass({
+  mixins: [ ChartMixin ],
 
   componentDidMount() {
     var {
@@ -68,7 +73,7 @@ var LineChart = React.createClass({
     height = height || defaults.height;
     margin = margin || defaults.margin;
 
-    xAccessor = xAccessor || ( d, i ) => i;
+    xAccessor = xAccessor || defaults.xAccessor;
 
     var all = group.all();
 
@@ -140,6 +145,109 @@ var LineChart = React.createClass({
   }
 });
 
+var BarChart = React.createClass({
+  mixins: [ ChartMixin ],
+
+  componentDidMount() {
+    var {
+      group,
+      width, height,
+      margin,
+      padding,
+      x, y,
+      xAccessor, yAccessor
+    } = this.props;
+
+    width = width || defaults.width;
+    height = height || defaults.height;
+    margin = margin || defaults.margin;
+    padding = padding || 2;
+
+    xAccessor = xAccessor || defaults.xAccessor;
+
+    var all = group.all();
+
+    x = x || d3.scale.linear()
+      .domain( d3.extent( all, yAccessor ) )
+      .range( [ 0, width ] );
+
+    var data = d3.layout.histogram()
+      .value( d => d.value )
+      .bins( x.ticks( 24 ) )
+      ( all );
+
+    y = y || d3.scale.linear()
+      .domain( d3.extent( data, d => d.y ) )
+      .range( [ height, 0 ] );
+
+    var xAxis = d3.svg.axis()
+      .scale( x )
+      .orient( 'bottom' );
+
+    var yAxis = d3.svg.axis()
+      .scale( y )
+      .orient( 'left' );
+
+    console.log(data);
+
+    var svg = d3.select( this.getDOMNode() ).append( 'svg' )
+      .attr( 'width', width + margin.left + margin.right )
+      .attr( 'height', height + margin.top + margin.bottom );
+
+    var g = svg.append( 'g' )
+      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
+
+    var xAxisGroup = g.append( 'g' )
+      .attr( 'class', 'x axis' )
+      .attr( 'transform', 'translate(0,' + height + ')' );
+
+    var yAxisGroup = g.append( 'g' )
+      .attr( 'class', 'y axis' );
+
+    var bars = g.append( 'g' )
+      .attr( 'class', 'bars' )
+      .selectAll( '.bar' );
+
+    function redraw() {
+      xAxisGroup.call( xAxis );
+      yAxisGroup.call( yAxis );
+
+      bars = bars.data( data );
+
+      bars.enter().append( 'rect' )
+        .attr( 'class', 'bar' )
+        .attr( 'x', d => x( d.x ) )
+        .attr( 'y', d => y( d.y ) )
+        .attr( 'width', d => x( d.dx + d.x ) - x( d.x ) - padding )
+        .attr( 'height', d => height - y( d.y ) );
+
+      bars.exit().remove();
+    }
+
+    redraw();
+
+    this.chart = {
+      x, y,
+      width, height,
+      margin,
+      xAxis, yAxis,
+      xAccessor, yAccessor,
+      xAxisGroup, yAxisGroup,
+      bars,
+      redraw
+    };
+  },
+
+  shouldComponentUpdate() {
+    this.chart.redraw();
+    return false;
+  },
+
+  render() {
+    return <div>{this.props.children}</div>;
+  }
+});
+
 export default React.createClass({
   render() {
     var accessor = d => d.value;
@@ -153,6 +261,15 @@ export default React.createClass({
             dimension={store.dimensions[i]}
             group={group}
             yAccessor={accessor}/>;
+        })}
+        {_.map( store.groups, ( group, i ) => {
+          return <BarChart
+            key={i}
+            id={'chart-' + i}
+            dimension={store.dimensions[i]}
+            group={group}
+            yAccessor={accessor}
+            padding={2}/>;
         })}
       </div>
     );

@@ -188,8 +188,6 @@ var BarChart = React.createClass({
       .scale( y )
       .orient( 'left' );
 
-    console.log(data);
-
     var svg = d3.select( this.getDOMNode() ).append( 'svg' )
       .attr( 'width', width + margin.left + margin.right )
       .attr( 'height', height + margin.top + margin.bottom );
@@ -230,6 +228,7 @@ var BarChart = React.createClass({
       x, y,
       width, height,
       margin,
+      padding,
       xAxis, yAxis,
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
@@ -248,6 +247,98 @@ var BarChart = React.createClass({
   }
 });
 
+var ScatterPlot = React.createClass({
+  mixins: [ ChartMixin ],
+
+  componentDidMount() {
+    var {
+      group,
+      width, height,
+      margin,
+      radius,
+      x, y,
+      xAccessor, yAccessor
+    } = this.props;
+
+    width = width || defaults.width;
+    height = height || defaults.height;
+    margin = margin || defaults.margin;
+    radius = radius || 2;
+
+    xAccessor = xAccessor || defaults.xAccessor;
+
+    var all = group.all();
+
+    x = x || d3.scale.linear()
+      .domain( d3.extent( all, xAccessor ) )
+      .range( [ 0, width ] );
+
+    y = y || d3.scale.linear()
+      .domain( d3.extent( all, yAccessor ) )
+      .range( [ 0, width ] );
+
+    var xAxis = d3.svg.axis()
+      .scale( x )
+      .orient( 'bottom' );
+
+    var yAxis = d3.svg.axis()
+      .scale( y )
+      .orient( 'left' );
+
+    var plotX = _.compose( x, xAccessor );
+    var plotY = _.compose( y, yAccessor );
+
+    var svg = d3.select( this.getDOMNode() ).append( 'svg' )
+      .attr( 'width', width + margin.left + margin.right )
+      .attr( 'height', height + margin.top + margin.bottom );
+
+    var g = svg.append( 'g' )
+      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
+
+    var xAxisGroup = g.append( 'g' )
+      .attr( 'class', 'x axis' )
+      .attr( 'transform', 'translate(0,' + height + ')' );
+
+    var yAxisGroup = g.append( 'g' )
+      .attr( 'class', 'y axis' );
+
+    var circles = g.append( 'g' )
+      .selectAll( 'circle' );
+
+    function redraw() {
+      xAxisGroup.call( xAxis );
+      yAxisGroup.call( yAxis );
+
+      circles = circles.data( all );
+
+      circles.enter().append( 'circle' )
+        .attr( 'cx', plotX )
+        .attr( 'cy', plotY )
+        .attr( 'r', radius );
+
+      circles.exit().remove();
+    }
+
+    redraw();
+
+    this.chart = {
+      x, y,
+      width, height,
+      margin,
+      radius,
+      xAxis, yAxis,
+      xAccessor, yAccessor,
+      xAxisGroup, yAxisGroup,
+      circles,
+      redraw
+    };
+  },
+
+  render() {
+    return <div>{this.props.children}</div>;
+  }
+});
+
 export default React.createClass({
   render() {
     var accessor = d => d.value;
@@ -257,7 +348,7 @@ export default React.createClass({
         {_.map( store.groups, ( group, i ) => {
           return <LineChart
             key={i}
-            id={'chart-' + i}
+            id={'line-chart-' + i}
             dimension={store.dimensions[i]}
             group={group}
             yAccessor={accessor}/>;
@@ -265,11 +356,19 @@ export default React.createClass({
         {_.map( store.groups, ( group, i ) => {
           return <BarChart
             key={i}
-            id={'chart-' + i}
+            id={'bar-chart-' + i}
             dimension={store.dimensions[i]}
             group={group}
             yAccessor={accessor}
             padding={2}/>;
+        })}
+        {_.map( store.groups, ( group, i ) => {
+          return <ScatterPlot
+            key={i}
+            id={'scatter-plot-' + i}
+            dimension={store.dimensions[i]}
+            group={group}
+            yAccessor={accessor}/>;
         })}
       </div>
     );

@@ -141,7 +141,7 @@ var LineChart = React.createClass({
   },
 
   render() {
-    return <div>{this.props.children}</div>;
+    return <div className='chart'>{this.props.children}</div>;
   }
 });
 
@@ -243,7 +243,7 @@ var BarChart = React.createClass({
   },
 
   render() {
-    return <div>{this.props.children}</div>;
+    return <div className='chart'>{this.props.children}</div>;
   }
 });
 
@@ -335,7 +335,7 @@ var ScatterPlot = React.createClass({
   },
 
   render() {
-    return <div>{this.props.children}</div>;
+    return <div className='chart'>{this.props.children}</div>;
   }
 });
 
@@ -345,31 +345,37 @@ export default React.createClass({
 
     return (
       <div>
-        {_.map( store.groups, ( group, i ) => {
-          return <LineChart
-            key={i}
-            id={'line-chart-' + i}
-            dimension={store.dimensions[i]}
-            group={group}
-            yAccessor={accessor}/>;
-        })}
-        {_.map( store.groups, ( group, i ) => {
-          return <BarChart
-            key={i}
-            id={'bar-chart-' + i}
-            dimension={store.dimensions[i]}
-            group={group}
-            yAccessor={accessor}
-            padding={2}/>;
-        })}
-        {_.map( store.groups, ( group, i ) => {
-          return <ScatterPlot
-            key={i}
-            id={'scatter-plot-' + i}
-            dimension={store.dimensions[i]}
-            group={group}
-            yAccessor={accessor}/>;
-        })}
+        <div className='chart-group'>
+          {_.map( store.groups, ( group, i ) => {
+            return <LineChart
+              key={i}
+              id={'line-chart-' + i}
+              dimension={store.dimensions[i]}
+              group={group}
+              yAccessor={accessor}/>;
+          })}
+        </div>
+        <div className='chart-group'>
+          {_.map( store.groups, ( group, i ) => {
+            return <BarChart
+              key={i}
+              id={'bar-chart-' + i}
+              dimension={store.dimensions[i]}
+              group={group}
+              yAccessor={accessor}
+              padding={2}/>;
+          })}
+        </div>
+        <div className='chart-group'>
+          {_.map( store.groups, ( group, i ) => {
+            return <ScatterPlot
+              key={i}
+              id={'scatter-plot-' + i}
+              dimension={store.dimensions[i]}
+              group={group}
+              yAccessor={accessor}/>;
+          })}
+        </div>
       </div>
     );
   }

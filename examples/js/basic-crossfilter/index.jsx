@@ -57,21 +57,72 @@ var ChartMixin = {
   }
 };
 
+var Chart = {
+  create( el, margin, width, height, x, y ) {
+    // margins have been subtracted from width and height.
+    var svg = Chart.setSize( el, margin, width, height );
+    var g = Chart.createGroup( svg, margin );
+
+    return {
+      svg,
+      g,
+      xAxis: Chart.createXAxis( x ),
+      yAxis: Chart.createYAxis( y ),
+      xAxisGroup: Chart.createXAxisGroup( g, height ),
+      yAxisGroup: Chart.createYAxisGroup( g )
+    };
+  },
+
+  setSize( el, margin, width, height ) {
+    return d3.select( el )
+      .attr( 'width', width + margin.left + margin.right )
+      .attr( 'height', height + margin.top + margin.bottom );
+  },
+
+  createGroup( svg, margin ) {
+    return svg.append( 'g' )
+      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
+  },
+
+  createXAxis( x ) {
+    return d3.svg.axis()
+      .scale( x )
+      .orient( 'bottom' );
+  },
+
+  createYAxis( y ) {
+    return d3.svg.axis()
+      .scale( y )
+      .orient( 'left' );
+  },
+
+  createXAxisGroup( g, height ) {
+    return g.append( 'g' )
+      .attr( 'class', 'x axis' )
+      .attr( 'transform', 'translate(0,' + height + ')' );
+  },
+
+  createYAxisGroup( g ) {
+    return g.append( 'g' )
+      .attr( 'class', 'y axis' );
+  }
+};
+
 var LineChart = React.createClass({
   mixins: [ ChartMixin ],
 
   componentDidMount() {
     var {
       group,
-      width, height,
       margin,
+      width, height,
       x, y,
       xAccessor, yAccessor
     } = this.props;
 
-    width = width || defaults.width;
-    height = height || defaults.height;
     margin = margin || defaults.margin;
+    width = ( width || defaults.width ) - margin.left - margin.right;
+    height = ( height || defaults.height ) - margin.top - margin.bottom;
 
     xAccessor = xAccessor || defaults.xAccessor;
 
@@ -85,32 +136,15 @@ var LineChart = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ height, 0 ] );
 
-    var xAxis = d3.svg.axis()
-      .scale( x )
-      .orient( 'bottom' );
-
-    var yAxis = d3.svg.axis()
-      .scale( y )
-      .orient( 'left' );
-
     var line = d3.svg.line()
       .x( _.compose( x, xAccessor ) )
       .y( _.compose( y, yAccessor ) );
 
-    // DOM elements.
-    var svg = d3.select( this.getDOMNode() ).append( 'svg' )
-      .attr( 'width', width + margin.left + margin.right )
-      .attr( 'height', height + margin.top + margin.bottom );
-
-    var g = svg.append( 'g' )
-      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
-
-    var xAxisGroup = g.append( 'g' )
-      .attr( 'class', 'x axis' )
-      .attr( 'transform', 'translate(0,' + height + ')' );
-
-    var yAxisGroup = g.append( 'g' )
-      .attr( 'class', 'y axis' );
+    var {
+      g,
+      xAxis, yAxis,
+      xAxisGroup, yAxisGroup
+    } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
 
     var linePath = g.append( 'path' )
       .attr( 'class', 'line' );
@@ -124,9 +158,9 @@ var LineChart = React.createClass({
     redraw();
 
     this.chart = {
-      x, y,
-      width, height,
       margin,
+      width, height,
+      x, y,
       xAxis, yAxis,
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
@@ -141,7 +175,7 @@ var LineChart = React.createClass({
   },
 
   render() {
-    return <div className='chart'>{this.props.children}</div>;
+    return <svg className='chart'>{this.props.children}</svg>;
   }
 });
 
@@ -151,19 +185,19 @@ var BarChart = React.createClass({
   componentDidMount() {
     var {
       group,
-      width, height,
       margin,
-      padding,
+      width, height,
       x, y,
-      xAccessor, yAccessor
+      xAccessor, yAccessor,
+      padding
     } = this.props;
 
-    width = width || defaults.width;
-    height = height || defaults.height;
     margin = margin || defaults.margin;
-    padding = padding || 2;
+    width = ( width || defaults.width ) - margin.left - margin.right;
+    height = ( height || defaults.height ) - margin.top - margin.bottom;
 
     xAccessor = xAccessor || defaults.xAccessor;
+    padding = padding || 2;
 
     var all = group.all();
 
@@ -180,27 +214,11 @@ var BarChart = React.createClass({
       .domain( d3.extent( data, d => d.y ) )
       .range( [ height, 0 ] );
 
-    var xAxis = d3.svg.axis()
-      .scale( x )
-      .orient( 'bottom' );
-
-    var yAxis = d3.svg.axis()
-      .scale( y )
-      .orient( 'left' );
-
-    var svg = d3.select( this.getDOMNode() ).append( 'svg' )
-      .attr( 'width', width + margin.left + margin.right )
-      .attr( 'height', height + margin.top + margin.bottom );
-
-    var g = svg.append( 'g' )
-      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
-
-    var xAxisGroup = g.append( 'g' )
-      .attr( 'class', 'x axis' )
-      .attr( 'transform', 'translate(0,' + height + ')' );
-
-    var yAxisGroup = g.append( 'g' )
-      .attr( 'class', 'y axis' );
+    var {
+      g,
+      xAxis, yAxis,
+      xAxisGroup, yAxisGroup
+    } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
 
     var bars = g.append( 'g' )
       .attr( 'class', 'bars' )
@@ -225,14 +243,14 @@ var BarChart = React.createClass({
     redraw();
 
     this.chart = {
-      x, y,
-      width, height,
       margin,
-      padding,
+      width, height,
+      x, y,
       xAxis, yAxis,
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
       bars,
+      padding,
       redraw
     };
   },
@@ -243,7 +261,7 @@ var BarChart = React.createClass({
   },
 
   render() {
-    return <div className='chart'>{this.props.children}</div>;
+    return <svg className='chart'>{this.props.children}</svg>;
   }
 });
 
@@ -253,19 +271,19 @@ var ScatterPlot = React.createClass({
   componentDidMount() {
     var {
       group,
-      width, height,
       margin,
-      radius,
+      width, height,
       x, y,
-      xAccessor, yAccessor
+      xAccessor, yAccessor,
+      radius
     } = this.props;
 
-    width = width || defaults.width;
-    height = height || defaults.height;
     margin = margin || defaults.margin;
-    radius = radius || 2;
+    width = ( width || defaults.width ) - margin.left - margin.right;
+    height = ( height || defaults.height ) - margin.top - margin.bottom;
 
     xAccessor = xAccessor || defaults.xAccessor;
+    radius = radius || 2;
 
     var all = group.all();
 
@@ -277,30 +295,14 @@ var ScatterPlot = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ 0, width ] );
 
-    var xAxis = d3.svg.axis()
-      .scale( x )
-      .orient( 'bottom' );
-
-    var yAxis = d3.svg.axis()
-      .scale( y )
-      .orient( 'left' );
-
     var plotX = _.compose( x, xAccessor );
     var plotY = _.compose( y, yAccessor );
 
-    var svg = d3.select( this.getDOMNode() ).append( 'svg' )
-      .attr( 'width', width + margin.left + margin.right )
-      .attr( 'height', height + margin.top + margin.bottom );
-
-    var g = svg.append( 'g' )
-      .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
-
-    var xAxisGroup = g.append( 'g' )
-      .attr( 'class', 'x axis' )
-      .attr( 'transform', 'translate(0,' + height + ')' );
-
-    var yAxisGroup = g.append( 'g' )
-      .attr( 'class', 'y axis' );
+    var {
+      g,
+      xAxis, yAxis,
+      xAxisGroup, yAxisGroup
+    } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
 
     var circles = g.append( 'g' )
       .selectAll( 'circle' );
@@ -322,20 +324,20 @@ var ScatterPlot = React.createClass({
     redraw();
 
     this.chart = {
-      x, y,
-      width, height,
       margin,
-      radius,
+      width, height,
+      x, y,
       xAxis, yAxis,
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
       circles,
+      radius,
       redraw
     };
   },
 
   render() {
-    return <div className='chart'>{this.props.children}</div>;
+    return <svg className='chart'>{this.props.children}</svg>;
   }
 });
 

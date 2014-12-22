@@ -31,7 +31,8 @@ function createChart( el, props ) {
 
   var yAxis = d3.svg.axis()
     .scale( y )
-    .orient( 'left' );
+    .orient( 'left' )
+    .ticks( 6 );
 
   var line = d3.svg.line()
     .x( _.compose( x, xAccessor ) )

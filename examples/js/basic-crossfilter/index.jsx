@@ -146,6 +146,9 @@ var LineChart = React.createClass({
       xAxisGroup, yAxisGroup
     } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
 
+    xAxis.ticks( 6 );
+    yAxis.ticks( 6 );
+
     var linePath = g.append( 'path' )
       .attr( 'class', 'line' );
 
@@ -219,6 +222,9 @@ var BarChart = React.createClass({
       xAxis, yAxis,
       xAxisGroup, yAxisGroup
     } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
+
+    xAxis.ticks( 6 );
+    yAxis.ticks( 6 );
 
     var bars = g.append( 'g' )
       .attr( 'class', 'bars' )
@@ -303,6 +309,9 @@ var ScatterPlot = React.createClass({
       xAxis, yAxis,
       xAxisGroup, yAxisGroup
     } = Chart.create( this.getDOMNode(), margin, width, height, x, y );
+
+    xAxis.ticks( 6 );
+    yAxis.ticks( 6 );
 
     var circles = g.append( 'g' )
       .selectAll( 'circle' );

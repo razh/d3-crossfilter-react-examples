@@ -140,6 +140,9 @@ var LineChart = React.createClass({
       .x( _.compose( x, xAccessor ) )
       .y( _.compose( y, yAccessor ) );
 
+    var brush = d3.svg.brush()
+      .x( x );
+
     var {
       g,
       xAxis, yAxis,
@@ -151,6 +154,13 @@ var LineChart = React.createClass({
 
     var linePath = g.append( 'path' )
       .attr( 'class', 'line' );
+
+    var brushGroup = g.append( 'g' )
+      .attr( 'class', 'brush' )
+      .call( brush );
+
+    brushGroup.selectAll( 'rect' )
+      .attr( 'height', height );
 
     function redraw() {
       xAxisGroup.call( xAxis );
@@ -168,6 +178,7 @@ var LineChart = React.createClass({
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
       line, linePath,
+      brushGroup,
       redraw
     };
   },
@@ -217,6 +228,9 @@ var BarChart = React.createClass({
       .domain( d3.extent( data, d => d.y ) )
       .range( [ height, 0 ] );
 
+    var brush = d3.svg.brush()
+      .x( x );
+
     var {
       g,
       xAxis, yAxis,
@@ -229,6 +243,13 @@ var BarChart = React.createClass({
     var bars = g.append( 'g' )
       .attr( 'class', 'bars' )
       .selectAll( '.bar' );
+
+    var brushGroup = g.append( 'g' )
+      .attr( 'class', 'brush' )
+      .call( brush );
+
+    brushGroup.selectAll( 'rect' )
+      .attr( 'height', height );
 
     function redraw() {
       xAxisGroup.call( xAxis );
@@ -257,6 +278,7 @@ var BarChart = React.createClass({
       xAxisGroup, yAxisGroup,
       bars,
       padding,
+      brushGroup,
       redraw
     };
   },
@@ -304,6 +326,10 @@ var ScatterPlot = React.createClass({
     var plotX = _.compose( x, xAccessor );
     var plotY = _.compose( y, yAccessor );
 
+    var brush = d3.svg.brush()
+      .x( x )
+      .y( y );
+
     var {
       g,
       xAxis, yAxis,
@@ -315,6 +341,10 @@ var ScatterPlot = React.createClass({
 
     var circles = g.append( 'g' )
       .selectAll( 'circle' );
+
+    var brushGroup = g.append( 'g' )
+      .attr( 'class', 'brush' )
+      .call( brush );
 
     function redraw() {
       xAxisGroup.call( xAxis );
@@ -341,6 +371,7 @@ var ScatterPlot = React.createClass({
       xAxisGroup, yAxisGroup,
       circles,
       radius,
+      brushGroup,
       redraw
     };
   },

@@ -40,13 +40,20 @@ var store = (() => {
     groups.push( dimension.group().reduceSum( accessor ) );
   });
 
+  var charts = [];
+
   return {
     data,
     accessors,
     dimensions,
-    groups
+    groups,
+    charts
   };
 }) ();
+
+function redrawAll() {
+  _.forEach( store.charts, chart => chart.redraw() );
+}
 
 var ChartMixin = {
   propTypes: {
@@ -54,6 +61,24 @@ var ChartMixin = {
     dimension: React.PropTypes.object.isRequired,
     group: React.PropTypes.object.isRequired,
     yAccessor: React.PropTypes.func.isRequired
+  },
+
+  onBrush() {
+    if ( this.chart.brush.empty() ) {
+      this.props.dimension.filterAll();
+    } else {
+      var extent = this.chart.brush.extent();
+      this.props.dimension.filter( extent );
+    }
+
+    redrawAll();
+  },
+
+  onBrushEnd() {
+    if ( this.chart.brush.empty() ) {
+      this.props.dimension.filterAll();
+      redrawAll();
+    }
   }
 };
 
@@ -163,6 +188,7 @@ var LineChart = React.createClass({
       .attr( 'height', height );
 
     function redraw() {
+      all = group.all();
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
       linePath.datum( all ).attr( 'd', line );
@@ -178,9 +204,15 @@ var LineChart = React.createClass({
       xAccessor, yAccessor,
       xAxisGroup, yAxisGroup,
       line, linePath,
-      brushGroup,
+      brush, brushGroup,
       redraw
     };
+
+    store.charts.push( this.chart );
+
+    brush
+      .on( 'brush', this.onBrush )
+      .on( 'brushend', this.onBrushEnd );
   },
 
   shouldComponentUpdate() {
@@ -219,13 +251,12 @@ var BarChart = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ 0, width ] );
 
-    var data = d3.layout.histogram()
+    var histogram = d3.layout.histogram()
       .value( d => d.value )
-      .bins( x.ticks( 24 ) )
-      ( all );
+      .bins( x.ticks( 24 ) );
 
     y = y || d3.scale.linear()
-      .domain( d3.extent( data, d => d.y ) )
+      .domain( d3.extent( histogram( all ), d => d.y ) )
       .range( [ height, 0 ] );
 
     var brush = d3.svg.brush()
@@ -252,13 +283,17 @@ var BarChart = React.createClass({
       .attr( 'height', height );
 
     function redraw() {
+      var all = group.all();
+
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
 
-      bars = bars.data( data );
+      bars = bars.data( histogram( all ) );
 
       bars.enter().append( 'rect' )
-        .attr( 'class', 'bar' )
+        .attr( 'class', 'bar' );
+
+      bars
         .attr( 'x', d => x( d.x ) )
         .attr( 'y', d => y( d.y ) )
         .attr( 'width', d => x( d.dx + d.x ) - x( d.x ) - padding )
@@ -278,9 +313,15 @@ var BarChart = React.createClass({
       xAxisGroup, yAxisGroup,
       bars,
       padding,
-      brushGroup,
+      brush, brushGroup,
       redraw
     };
+
+    store.charts.push( this.chart );
+
+    brush
+      .on( 'brush', this.onBrush )
+      .on( 'brushend', this.onBrushEnd );
   },
 
   shouldComponentUpdate() {
@@ -347,15 +388,19 @@ var ScatterPlot = React.createClass({
       .call( brush );
 
     function redraw() {
+      all = group.all();
+
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
 
       circles = circles.data( all );
 
       circles.enter().append( 'circle' )
-        .attr( 'cx', plotX )
-        .attr( 'cy', plotY )
         .attr( 'r', radius );
+
+      circles
+        .attr( 'cx', plotX )
+        .attr( 'cy', plotY );
 
       circles.exit().remove();
     }
@@ -371,9 +416,15 @@ var ScatterPlot = React.createClass({
       xAxisGroup, yAxisGroup,
       circles,
       radius,
-      brushGroup,
+      brush, brushGroup,
       redraw
     };
+
+    store.charts.push( this.chart );
+
+    brush
+      .on( 'brush', this.onBrush )
+      .on( 'brushend', this.onBrushEnd );
   },
 
   render() {

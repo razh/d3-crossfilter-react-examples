@@ -9,44 +9,30 @@ var defaults = {
   margin: { top: 32, left: 32, bottom: 32, right: 32 },
   width: 320,
   height: 320,
-  xAccessor: ( d, i ) => i
+  xAccessor: d => d.key
 };
 
 var store = (() => {
-  var data = _.range( 256 ).map(() => {
-    return {
-      s: randomGaussian(),
-      t: randomGaussian(),
-      p: randomGaussian(),
-      q: randomGaussian()
-    };
-  });
-
-  var accessors = [
-    d => d.s,
-    d => d.t,
-    d => d.p,
-    d => d.q
-  ];
+  var data = _.range( 256 ).map( i => [ i, randomGaussian() + 8 ] );
 
   // Initialize crossfilter dataset.
   var filter = crossfilter( data );
-  var dimensions = [];
-  var groups = [];
 
-  accessors.forEach( accessor => {
-    var dimension = filter.dimension( ( d, i ) => i );
-    dimensions.push( dimension );
-    groups.push( dimension.group().reduceSum( accessor ) );
-  });
+  // Create dimensions and groups.
+  var index = filter.dimension( d => d[0] );
+  var indexGroup = index.group().reduceSum( d => d[1] );
+  var value = filter.dimension( d => d[1] );
+  var valueGroup = value.group().reduceSum( d => d[1] );
+  var index2D = filter.dimension( d => d );
+  var index2DGroup = index2D.group();
 
   var charts = [];
 
   return {
     data,
-    accessors,
-    dimensions,
-    groups,
+    index, indexGroup,
+    value, valueGroup,
+    index2D, index2DGroup,
     charts
   };
 }) ();
@@ -61,17 +47,6 @@ var ChartMixin = {
     dimension: React.PropTypes.object.isRequired,
     group: React.PropTypes.object.isRequired,
     yAccessor: React.PropTypes.func.isRequired
-  },
-
-  onBrush() {
-    if ( this.chart.brush.empty() ) {
-      this.props.dimension.filterAll();
-    } else {
-      var extent = this.chart.brush.extent();
-      this.props.dimension.filter( extent );
-    }
-
-    redrawAll();
   },
 
   onBrushEnd() {
@@ -188,7 +163,7 @@ var LineChart = React.createClass({
       .attr( 'height', height );
 
     function redraw() {
-      all = group.all();
+      all = group.all().filter( d => d.value );
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
       linePath.datum( all ).attr( 'd', line );
@@ -213,6 +188,17 @@ var LineChart = React.createClass({
     brush
       .on( 'brush', this.onBrush )
       .on( 'brushend', this.onBrushEnd );
+  },
+
+  onBrush() {
+    if ( this.chart.brush.empty() ) {
+      this.props.dimension.filterAll();
+    } else {
+      var extent = this.chart.brush.extent();
+      this.props.dimension.filter( extent );
+    }
+
+    redrawAll();
   },
 
   shouldComponentUpdate() {
@@ -256,7 +242,7 @@ var BarChart = React.createClass({
       .bins( x.ticks( 24 ) );
 
     y = y || d3.scale.linear()
-      .domain( d3.extent( histogram( all ), d => d.y ) )
+      .domain( [ 0, d3.max( histogram( all ), d => d.y ) ] )
       .range( [ height, 0 ] );
 
     var brush = d3.svg.brush()
@@ -283,7 +269,7 @@ var BarChart = React.createClass({
       .attr( 'height', height );
 
     function redraw() {
-      var all = group.all();
+      var all = group.all().filter( d => d.value );
 
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
@@ -324,6 +310,17 @@ var BarChart = React.createClass({
       .on( 'brushend', this.onBrushEnd );
   },
 
+  onBrush() {
+    if ( this.chart.brush.empty() ) {
+      this.props.dimension.filterAll();
+    } else {
+      var extent = this.chart.brush.extent();
+      this.props.dimension.filter( extent );
+    }
+
+    redrawAll();
+  },
+
   shouldComponentUpdate() {
     this.chart.redraw();
     return false;
@@ -362,7 +359,7 @@ var ScatterPlot = React.createClass({
 
     y = y || d3.scale.linear()
       .domain( d3.extent( all, yAccessor ) )
-      .range( [ 0, width ] );
+      .range( [ height, 0 ] );
 
     var plotX = _.compose( x, xAccessor );
     var plotY = _.compose( y, yAccessor );
@@ -427,6 +424,20 @@ var ScatterPlot = React.createClass({
       .on( 'brushend', this.onBrushEnd );
   },
 
+  onBrush() {
+    if ( this.chart.brush.empty() ) {
+      this.props.dimension.filterAll();
+    } else {
+      var extent = this.chart.brush.extent();
+      this.props.dimension.filterFunction( d => {
+        return extent[0][0] <= d[0] && d[0] <= extent[1][0] &&
+               extent[0][1] <= d[1] && d[1] <= extent[1][1];
+      });
+    }
+
+    redrawAll();
+  },
+
   render() {
     return <svg className='chart'>{this.props.children}</svg>;
   }
@@ -434,40 +445,30 @@ var ScatterPlot = React.createClass({
 
 export default React.createClass({
   render() {
-    var accessor = d => d.value;
-
     return (
       <div>
         <div className='chart-group'>
-          {_.map( store.groups, ( group, i ) => {
-            return <LineChart
-              key={i}
-              id={'line-chart-' + i}
-              dimension={store.dimensions[i]}
-              group={group}
-              yAccessor={accessor}/>;
-          })}
+          <LineChart
+            id='line-chart'
+            dimension={store.index}
+            group={store.indexGroup}
+            yAccessor={d => d.value}/>
         </div>
         <div className='chart-group'>
-          {_.map( store.groups, ( group, i ) => {
-            return <BarChart
-              key={i}
-              id={'bar-chart-' + i}
-              dimension={store.dimensions[i]}
-              group={group}
-              yAccessor={accessor}
-              padding={2}/>;
-          })}
+          <BarChart
+            id='bar-chart'
+            dimension={store.value}
+            group={store.valueGroup}
+            yAccessor={d => d.value}
+            padding={2}/>
         </div>
         <div className='chart-group'>
-          {_.map( store.groups, ( group, i ) => {
-            return <ScatterPlot
-              key={i}
-              id={'scatter-plot-' + i}
-              dimension={store.dimensions[i]}
-              group={group}
-              yAccessor={accessor}/>;
-          })}
+          <ScatterPlot
+            id='scatter-plot'
+            dimension={store.index2D}
+            group={store.index2DGroup}
+            xAccessor={d => d.key[0]}
+            yAccessor={d => d.key[1]}/>
         </div>
       </div>
     );

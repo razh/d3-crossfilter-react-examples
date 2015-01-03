@@ -43,9 +43,7 @@ gulp.task('js', function() {
       extensions: ['.jsx']
     }, watchify.args)));
 
-  bundler.transform(to5ify.configure({
-    modules: 'commonInterop'
-  }));
+  bundler.transform(to5ify);
 
   function rebundle() {
     return bundler.bundle()

@@ -35,8 +35,8 @@ function createChart( el, props ) {
     .ticks( 6 );
 
   var line = d3.svg.line()
-    .x( _.compose( x, xAccessor ) )
-    .y( _.compose( y, yAccessor ) );
+    .x( _.flow( xAccessor, x ) )
+    .y( _.flow( yAccessor, y ) );
 
   var svg = d3.select( el ).append( 'svg' )
     .attr( 'width', width + margin.left + margin.right )

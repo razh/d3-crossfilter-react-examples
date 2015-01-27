@@ -38,8 +38,8 @@ export default React.createClass({
     } = this.props;
 
     line
-      .x( _.compose( x, xAccessor ) )
-      .y( _.compose( y, yAccessor ) )
+      .x( _.flow( xAccessor, x ) )
+      .y( _.flow( yAccessor, y ) )
       .defined( defined )
       .interpolate( interpolate )
       .tension( tension );

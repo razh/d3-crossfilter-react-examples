@@ -137,8 +137,8 @@ var LineChart = React.createClass({
       .range( [ height, 0 ] );
 
     var line = d3.svg.line()
-      .x( _.compose( x, xAccessor ) )
-      .y( _.compose( y, yAccessor ) );
+      .x( _.flow( xAccessor, x ) )
+      .y( _.flow( yAccessor, y ) );
 
     var brush = d3.svg.brush()
       .x( x );
@@ -361,8 +361,8 @@ var ScatterPlot = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ height, 0 ] );
 
-    var plotX = _.compose( x, xAccessor );
-    var plotY = _.compose( y, yAccessor );
+    var plotX = _.flow( xAccessor, x );
+    var plotY = _.flow( yAccessor, y );
 
     var brush = d3.svg.brush()
       .x( x )

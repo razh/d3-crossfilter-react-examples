@@ -11,6 +11,7 @@ var del = require('del');
 var source = require('vinyl-source-stream');
 
 var gulp = require('gulp');
+var sourcemaps = require('gulp-sourcemaps');
 var stylus = require('gulp-stylus');
 var util = require('gulp-util');
 
@@ -62,14 +63,15 @@ gulp.task('js', function() {
 
 gulp.task('stylus', function() {
   return gulp.src('examples/css/index.styl')
+    .pipe(sourcemaps.init())
     .pipe(stylus({
       use: [
         nib(),
         jeet()
-      ],
-      sourcemap: { inline: true }
+      ]
     }))
     .on('error', onError)
+    .pipe(sourcemaps.write())
     .pipe(gulp.dest('dist'))
     .pipe(browserSync.reload({stream: true}));
 });

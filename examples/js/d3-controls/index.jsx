@@ -5,44 +5,44 @@ import React from 'react/addons';
 import { randomGaussian } from './../data/random';
 
 function createChart( el, props ) {
-  var { data, margin, width, height } = props;
+  let { data, margin, width, height } = props;
 
   data = data || _.range( 128 ).map( randomGaussian );
   margin = margin || { top: 48, left: 48, bottom: 48, right: 48 };
   width = ( width || 640 ) - margin.left - margin.right;
   height = ( height || 320 ) - margin.top - margin.bottom;
 
-  var xAccessor = ( d, i ) => i;
-  var yAccessor = d => d;
+  const xAccessor = ( d, i ) => i;
+  const yAccessor = d => d;
 
-  var extent = d3.extent( data, xAccessor );
+  const extent = d3.extent( data, xAccessor );
 
-  var x = d3.scale.linear()
+  const x = d3.scale.linear()
     .domain( extent )
     .range( [ 0, width ] );
 
-  var y = d3.scale.linear()
+  const y = d3.scale.linear()
     .domain( d3.extent( data, yAccessor ) )
     .range( [ height, 0 ] );
 
-  var xAxis = d3.svg.axis()
+  const xAxis = d3.svg.axis()
     .scale( x )
     .orient( 'bottom' );
 
-  var yAxis = d3.svg.axis()
+  const yAxis = d3.svg.axis()
     .scale( y )
     .orient( 'left' )
     .ticks( 6 );
 
-  var line = d3.svg.line()
+  const line = d3.svg.line()
     .x( _.flow( xAccessor, x ) )
     .y( _.flow( yAccessor, y ) );
 
-  var svg = d3.select( el ).append( 'svg' )
+  const svg = d3.select( el ).append( 'svg' )
     .attr( 'width', width + margin.left + margin.right )
     .attr( 'height', height + margin.top + margin.bottom );
 
-  var g = svg.append( 'g' )
+  const g = svg.append( 'g' )
     .attr( 'transform', 'translate(' + margin.left + ',' + margin.top + ')' );
 
   g.append( 'clipPath' )
@@ -53,23 +53,23 @@ function createChart( el, props ) {
     .attr( 'width', width )
     .attr( 'height', height );
 
-  var xAxisGroup = g.append( 'g' )
+  const xAxisGroup = g.append( 'g' )
     .attr( 'class', 'x axis' )
     .attr( 'transform', 'translate(0,' + height + ')' );
 
-  var yAxisGroup = g.append( 'g' )
+  const yAxisGroup = g.append( 'g' )
     .attr( 'class', 'y axis' );
 
-  var linePath = g.append( 'path' )
+  const linePath = g.append( 'path' )
     .datum( data )
     .attr( 'class', 'line' )
     .attr( 'clip-path', 'url(#clip)' );
 
   function update() {
     // Translation constraint.
-    var domain = x.domain();
-    var range = x.range();
-    var translate = zoom.translate();
+    const domain = x.domain();
+    const range = x.range();
+    const translate = zoom.translate();
 
     if ( domain[0] < extent[0] ) {
       zoom.translate( [ translate[0] - x( extent[0] ) + range[0], translate[1] ] );
@@ -83,7 +83,7 @@ function createChart( el, props ) {
     linePath.attr( 'd', line );
   }
 
-  var zoom = d3.behavior.zoom()
+  const zoom = d3.behavior.zoom()
     .on( 'zoom', update )
     .x( x )
     .scaleExtent( [ 1, Infinity ] );

@@ -1,14 +1,14 @@
 import React from 'react/addons';
 import Router from 'react-router';
 
-var { Route, RouteHandler, Link, HistoryLocation } = Router;
-
 import BasicD3 from './basic-d3/';
 import BasicReact from './basic-react/';
 import D3Controls from './d3-controls/';
 import BasicCrossfilter from './basic-crossfilter/';
 
-var App = React.createClass({
+const { Route, RouteHandler, Link, HistoryLocation } = Router;
+
+const App = React.createClass({
   render() {
     return (
       <div>
@@ -24,7 +24,7 @@ var App = React.createClass({
   }
 });
 
-var routes = (
+const routes = (
   <Route path='/' handler={App}>
     <Route name='basic-d3' path='/basic-d3' handler={BasicD3}/>
     <Route name='basic-react' path='/basic-react' handler={BasicReact}/>

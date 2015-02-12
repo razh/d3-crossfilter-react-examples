@@ -5,31 +5,32 @@ import React from 'react/addons';
 
 import { randomGaussian } from './../data/random';
 
-var defaults = {
+const defaults = {
   margin: { top: 32, left: 32, bottom: 32, right: 32 },
   width: 320,
   height: 320,
   xAccessor: d => d.key
 };
 
-var store = (() => {
-  var data = _.range( 256 ).map( i => [ i, randomGaussian() + 8 ] );
+const store = (() => {
+  const data = _.range( 256 ).map( i => [ i, randomGaussian() + 8 ] );
 
   // Initialize crossfilter dataset.
-  var filter = crossfilter( data );
+  const filter = crossfilter( data );
 
   // Create dimensions and groups.
-  var index = filter.dimension( d => d[0] );
-  var indexGroup = index.group().reduceSum( d => d[1] );
-  var value = filter.dimension( d => d[1] );
-  var valueGroup = value.group().reduceSum( d => d[1] );
-  var index2D = filter.dimension( d => d );
-  var index2DGroup = index2D.group();
+  const index = filter.dimension( d => d[0] );
+  const indexGroup = index.group().reduceSum( d => d[1] );
+  const value = filter.dimension( d => d[1] );
+  const valueGroup = value.group().reduceSum( d => d[1] );
+  const index2D = filter.dimension( d => d );
+  const index2DGroup = index2D.group();
 
-  var charts = [];
+  const charts = [];
 
   return {
     data,
+    filter,
     index, indexGroup,
     value, valueGroup,
     index2D, index2DGroup,
@@ -37,11 +38,19 @@ var store = (() => {
   };
 }) ();
 
+function filterAll() {
+  _.forEach([
+    store.index,
+    store.value,
+    store.index2D
+  ], dimension => dimension.filterAll() );
+}
+
 function redrawAll() {
   _.forEach( store.charts, chart => chart.redraw() );
 }
 
-var ChartMixin = {
+const ChartMixin = {
   propTypes: {
     id: React.PropTypes.string.isRequired,
     dimension: React.PropTypes.object.isRequired,
@@ -57,11 +66,11 @@ var ChartMixin = {
   }
 };
 
-var Chart = {
+const Chart = {
   create( el, margin, width, height, x, y ) {
     // margins have been subtracted from width and height.
-    var svg = Chart.setSize( el, margin, width, height );
-    var g = Chart.createGroup( svg, margin );
+    const svg = Chart.setSize( el, margin, width, height );
+    const g = Chart.createGroup( svg, margin );
 
     return {
       svg,
@@ -108,11 +117,11 @@ var Chart = {
   }
 };
 
-var LineChart = React.createClass({
+const LineChart = React.createClass({
   mixins: [ ChartMixin ],
 
   componentDidMount() {
-    var {
+    let {
       group,
       margin,
       width, height,
@@ -126,7 +135,7 @@ var LineChart = React.createClass({
 
     xAccessor = xAccessor || defaults.xAccessor;
 
-    var all = group.all();
+    let all = group.all();
 
     x = x || d3.scale.linear()
       .domain( d3.extent( all, xAccessor ) )
@@ -136,14 +145,14 @@ var LineChart = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ height, 0 ] );
 
-    var line = d3.svg.line()
+    const line = d3.svg.line()
       .x( _.flow( xAccessor, x ) )
       .y( _.flow( yAccessor, y ) );
 
-    var brush = d3.svg.brush()
+    const brush = d3.svg.brush()
       .x( x );
 
-    var {
+    const {
       g,
       xAxis, yAxis,
       xAxisGroup, yAxisGroup
@@ -152,10 +161,10 @@ var LineChart = React.createClass({
     xAxis.ticks( 6 );
     yAxis.ticks( 6 );
 
-    var linePath = g.append( 'path' )
+    const linePath = g.append( 'path' )
       .attr( 'class', 'line' );
 
-    var brushGroup = g.append( 'g' )
+    const brushGroup = g.append( 'g' )
       .attr( 'class', 'brush' )
       .call( brush );
 
@@ -194,7 +203,7 @@ var LineChart = React.createClass({
     if ( this.chart.brush.empty() ) {
       this.props.dimension.filterAll();
     } else {
-      var extent = this.chart.brush.extent();
+      const extent = this.chart.brush.extent();
       this.props.dimension.filter( extent );
     }
 
@@ -211,11 +220,11 @@ var LineChart = React.createClass({
   }
 });
 
-var BarChart = React.createClass({
+const BarChart = React.createClass({
   mixins: [ ChartMixin ],
 
   componentDidMount() {
-    var {
+    let {
       group,
       margin,
       width, height,
@@ -231,13 +240,13 @@ var BarChart = React.createClass({
     xAccessor = xAccessor || defaults.xAccessor;
     padding = padding || 2;
 
-    var all = group.all();
+    const all = group.all();
 
     x = x || d3.scale.linear()
       .domain( d3.extent( all, yAccessor ) )
       .range( [ 0, width ] );
 
-    var histogram = d3.layout.histogram()
+    const histogram = d3.layout.histogram()
       .value( d => d.value )
       .bins( x.ticks( 24 ) );
 
@@ -245,10 +254,10 @@ var BarChart = React.createClass({
       .domain( [ 0, d3.max( histogram( all ), d => d.y ) ] )
       .range( [ height, 0 ] );
 
-    var brush = d3.svg.brush()
+    const brush = d3.svg.brush()
       .x( x );
 
-    var {
+    const {
       g,
       xAxis, yAxis,
       xAxisGroup, yAxisGroup
@@ -257,11 +266,11 @@ var BarChart = React.createClass({
     xAxis.ticks( 6 );
     yAxis.ticks( 6 );
 
-    var bars = g.append( 'g' )
+    let bars = g.append( 'g' )
       .attr( 'class', 'bars' )
       .selectAll( '.bar' );
 
-    var brushGroup = g.append( 'g' )
+    const brushGroup = g.append( 'g' )
       .attr( 'class', 'brush' )
       .call( brush );
 
@@ -269,7 +278,7 @@ var BarChart = React.createClass({
       .attr( 'height', height );
 
     function redraw() {
-      var all = group.all().filter( d => d.value );
+      const all = group.all().filter( d => d.value );
 
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
@@ -314,7 +323,7 @@ var BarChart = React.createClass({
     if ( this.chart.brush.empty() ) {
       this.props.dimension.filterAll();
     } else {
-      var extent = this.chart.brush.extent();
+      const extent = this.chart.brush.extent();
       this.props.dimension.filter( extent );
     }
 
@@ -331,11 +340,11 @@ var BarChart = React.createClass({
   }
 });
 
-var ScatterPlot = React.createClass({
+const ScatterPlot = React.createClass({
   mixins: [ ChartMixin ],
 
   componentDidMount() {
-    var {
+    let {
       group,
       margin,
       width, height,
@@ -351,7 +360,7 @@ var ScatterPlot = React.createClass({
     xAccessor = xAccessor || defaults.xAccessor;
     radius = radius || 2;
 
-    var all = group.all();
+    let all = group.all();
 
     x = x || d3.scale.linear()
       .domain( d3.extent( all, xAccessor ) )
@@ -361,14 +370,14 @@ var ScatterPlot = React.createClass({
       .domain( d3.extent( all, yAccessor ) )
       .range( [ height, 0 ] );
 
-    var plotX = _.flow( xAccessor, x );
-    var plotY = _.flow( yAccessor, y );
+    const plotX = _.flow( xAccessor, x );
+    const plotY = _.flow( yAccessor, y );
 
-    var brush = d3.svg.brush()
+    const brush = d3.svg.brush()
       .x( x )
       .y( y );
 
-    var {
+    const {
       g,
       xAxis, yAxis,
       xAxisGroup, yAxisGroup
@@ -377,15 +386,15 @@ var ScatterPlot = React.createClass({
     xAxis.ticks( 6 );
     yAxis.ticks( 6 );
 
-    var circles = g.append( 'g' )
+    let circles = g.append( 'g' )
       .selectAll( 'circle' );
 
-    var brushGroup = g.append( 'g' )
+    const brushGroup = g.append( 'g' )
       .attr( 'class', 'brush' )
       .call( brush );
 
     function redraw() {
-      all = group.all();
+      let all = group.all();
 
       xAxisGroup.call( xAxis );
       yAxisGroup.call( yAxis );
@@ -428,7 +437,7 @@ var ScatterPlot = React.createClass({
     if ( this.chart.brush.empty() ) {
       this.props.dimension.filterAll();
     } else {
-      var extent = this.chart.brush.extent();
+      const extent = this.chart.brush.extent();
       this.props.dimension.filterFunction( d => {
         return extent[0][0] <= d[0] && d[0] <= extent[1][0] &&
                extent[0][1] <= d[1] && d[1] <= extent[1][1];
@@ -444,6 +453,10 @@ var ScatterPlot = React.createClass({
 });
 
 export default React.createClass({
+  componentWillMount() {
+    filterAll();
+  },
+
   render() {
     return (
       <div>
@@ -454,6 +467,7 @@ export default React.createClass({
             group={store.indexGroup}
             yAccessor={d => d.value}/>
         </div>
+
         <div className='chart-group'>
           <BarChart
             id='bar-chart'
@@ -462,6 +476,7 @@ export default React.createClass({
             yAccessor={d => d.value}
             padding={2}/>
         </div>
+
         <div className='chart-group'>
           <ScatterPlot
             id='scatter-plot'

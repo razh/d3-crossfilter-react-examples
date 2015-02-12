@@ -4,7 +4,8 @@ import React from 'react/addons';
 
 export default React.createClass({
   getDefaultProps() {
-    var line = d3.svg.line();
+    const line = d3.svg.line();
+
     return {
       data: [],
       // d3 line properties.
@@ -25,7 +26,7 @@ export default React.createClass({
   },
 
   render() {
-    var {
+    const {
       data,
       line,
       x,

@@ -3,12 +3,12 @@
 var PORT = process.env.PORT || 3000;
 
 var _ = require('lodash');
-var browserSync = require('browser-sync');
+var babelify = require('babelify');
 var browserify = require('browserify');
-var watchify = require('watchify');
-var to5ify = require('6to5ify');
+var browserSync = require('browser-sync');
 var del = require('del');
 var source = require('vinyl-source-stream');
+var watchify = require('watchify');
 
 var gulp = require('gulp');
 var sourcemaps = require('gulp-sourcemaps');
@@ -44,7 +44,7 @@ gulp.task('js', function() {
       extensions: ['.jsx']
     }, watchify.args)));
 
-  bundler.transform(to5ify);
+  bundler.transform(babelify);
 
   function rebundle() {
     return bundler.bundle()

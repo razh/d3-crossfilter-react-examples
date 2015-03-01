@@ -5,13 +5,6 @@ import React from 'react/addons';
 
 import { randomGaussian } from './../data/random';
 
-const defaults = {
-  margin: { top: 32, left: 32, bottom: 32, right: 32 },
-  width: 320,
-  height: 320,
-  xAccessor: d => d.key
-};
-
 const store = (() => {
   const data = _.range( 256 ).map( i => [ i, randomGaussian() + 8 ] );
 
@@ -56,6 +49,15 @@ const ChartMixin = {
     dimension: React.PropTypes.object.isRequired,
     group: React.PropTypes.object.isRequired,
     yAccessor: React.PropTypes.func.isRequired
+  },
+
+  getDefaultProps() {
+    return {
+      margin: { top: 32, left: 32, bottom: 32, right: 32 },
+      width: 320,
+      height: 320,
+      xAccessor: d => d.key
+    };
   },
 
   onBrushEnd() {
@@ -129,11 +131,8 @@ const LineChart = React.createClass({
       xAccessor, yAccessor
     } = this.props;
 
-    margin = margin || defaults.margin;
-    width = ( width || defaults.width ) - margin.left - margin.right;
-    height = ( height || defaults.height ) - margin.top - margin.bottom;
-
-    xAccessor = xAccessor || defaults.xAccessor;
+    width = width - margin.left - margin.right;
+    height = height - margin.top - margin.bottom;
 
     let all = group.all();
 
@@ -233,11 +232,8 @@ const BarChart = React.createClass({
       padding
     } = this.props;
 
-    margin = margin || defaults.margin;
-    width = ( width || defaults.width ) - margin.left - margin.right;
-    height = ( height || defaults.height ) - margin.top - margin.bottom;
-
-    xAccessor = xAccessor || defaults.xAccessor;
+    width = width - margin.left - margin.right;
+    height = height - margin.top - margin.bottom;
     padding = padding || 2;
 
     const all = group.all();
@@ -353,11 +349,8 @@ const ScatterPlot = React.createClass({
       radius
     } = this.props;
 
-    margin = margin || defaults.margin;
-    width = ( width || defaults.width ) - margin.left - margin.right;
-    height = ( height || defaults.height ) - margin.top - margin.bottom;
-
-    xAccessor = xAccessor || defaults.xAccessor;
+    width = width - margin.left - margin.right;
+    height = height - margin.top - margin.bottom;
     radius = radius || 2;
 
     let all = group.all();

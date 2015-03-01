@@ -7,10 +7,8 @@ import { randomGaussian } from './../data/random';
 function createChart( el, props ) {
   let { data, margin, width, height } = props;
 
-  data = data || _.range( 128 ).map( randomGaussian );
-  margin = margin || { top: 48, left: 48, bottom: 48, right: 48 };
-  width = ( width || 640 ) - margin.left - margin.right;
-  height = ( height || 320 ) - margin.top - margin.bottom;
+  width = width - margin.left - margin.right;
+  height = height - margin.top - margin.bottom;
 
   const xAccessor = ( d, i ) => i;
   const yAccessor = d => d;
@@ -98,6 +96,15 @@ function createChart( el, props ) {
 }
 
 export default React.createClass({
+  getDefaultProps() {
+    return {
+      data: _.range( 128 ).map( randomGaussian ),
+      margin: { top: 48, left: 48, bottom: 48, right: 48 },
+      width: 640,
+      height: 320
+    };
+  },
+
   componentDidMount() {
     createChart( this.getDOMNode(), this.props );
   },

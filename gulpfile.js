@@ -2,6 +2,9 @@
 
 var PORT = process.env.PORT || 3000;
 
+var EXAMPLES_DIR = './examples';
+var BUILD_DIR = 'dist';
+
 var _ = require('lodash');
 var babelify = require('babelify');
 var browserify = require('browserify');
@@ -21,7 +24,7 @@ var jeet = require('jeet');
 var historyAPIFallback = require('connect-history-api-fallback');
 
 function onError(error) {
-  util.log('Error: ' + error.message);
+  util.log(error.message);
   /*jshint validthis:true*/
   this.emit('end');
 }
@@ -31,14 +34,14 @@ gulp.task('browser-sync', function() {
     browser: [],
     port: PORT,
     server: {
-      baseDir: './dist',
+      baseDir: './' + BUILD_DIR,
       middleware: [historyAPIFallback]
     }
   });
 });
 
 gulp.task('js', function() {
-  var bundler = watchify(browserify('./examples/js/index.jsx',
+  var bundler = watchify(browserify(EXAMPLES_DIR + '/js/index.jsx',
     _.assign({
       debug: true,
       extensions: ['.jsx']
@@ -50,7 +53,7 @@ gulp.task('js', function() {
     return bundler.bundle()
       .on('error', onError)
       .pipe(source('bundle.js'))
-      .pipe(gulp.dest('dist'))
+      .pipe(gulp.dest(BUILD_DIR))
       .pipe(browserSync.reload({stream: true, once: true}));
   }
 
@@ -62,7 +65,7 @@ gulp.task('js', function() {
 });
 
 gulp.task('stylus', function() {
-  return gulp.src('examples/css/index.styl')
+  return gulp.src(EXAMPLES_DIR + '/css/index.styl')
     .pipe(sourcemaps.init())
     .pipe(stylus({
       use: [
@@ -72,17 +75,17 @@ gulp.task('stylus', function() {
     }))
     .on('error', onError)
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest(BUILD_DIR))
     .pipe(browserSync.reload({stream: true}));
 });
 
 gulp.task('assets', function() {
-  return gulp.src('./examples/assets/**/*')
-    .pipe(gulp.dest('dist'))
+  return gulp.src(EXAMPLES_DIR + '/assets/**/*')
+    .pipe(gulp.dest(BUILD_DIR))
     .pipe(browserSync.reload({stream: true, once: true}));
 });
 
-gulp.task('clean', del.bind(null, ['dist']));
+gulp.task('clean', del.bind(null, [BUILD_DIR]));
 
 gulp.task('default', [
   'assets',
@@ -90,6 +93,6 @@ gulp.task('default', [
   'js',
   'browser-sync'
 ], function() {
-  gulp.watch(['examples/css/**/*.styl'], ['stylus']);
-  gulp.watch(['examples/assets/**/*'], ['assets']);
+  gulp.watch([EXAMPLES_DIR + '/css/**/*.styl'], ['stylus']);
+  gulp.watch([EXAMPLES_DIR + '/assets/**/*'], ['assets']);
 });
